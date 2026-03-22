@@ -7,6 +7,7 @@ import { createReservation, getReservations, getRooms } from 'pages/remotes';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { EQUIPMENT_LABELS } from 'shared/consts';
+import { filterRooms } from './filterRooms';
 import { formatDate } from 'shared/utils';
 
 const ALL_EQUIPMENT: (keyof typeof EQUIPMENT_LABELS)[] = Object.keys(EQUIPMENT_LABELS);
@@ -28,7 +29,7 @@ export function RoomBookingPage() {
   const startTime = searchParams.get('startTime') || '';
   const endTime = searchParams.get('endTime') || '';
   const attendees = Number(searchParams.get('attendees')) || 1;
-  const equipment = searchParams.get('equipment')?.split(',').filter(Boolean) ?? [];
+  const equipment = searchParams.get('equipment')?.split(',').filter(Boolean).map((e: string) => e) ?? [];
   const preferredFloor = searchParams.get('floor') ? Number(searchParams.get('floor')) : null;
 
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export function RoomBookingPage() {
     setErrorMessage(null);
   };
 
-const { data: rooms = [] } = useQuery({ queryKey: ['rooms'], queryFn: getRooms });
+  const { data: rooms = [] } = useQuery({ queryKey: ['rooms'], queryFn: getRooms });
   const { data: reservations = [] } = useQuery({ queryKey: ['reservations', date], queryFn: () => getReservations(date), enabled: !!date });
 
   const createMutation = useMutation({
@@ -76,22 +77,7 @@ const { data: rooms = [] } = useQuery({ queryKey: ['rooms'], queryFn: getRooms }
   const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
 
   const availableRooms = isFilterComplete
-    ? rooms
-        .filter((room: { id: string; capacity: number; equipment: string[]; floor: number }) => {
-          if (room.capacity < attendees) return false;
-          if (!equipment.every(eq => room.equipment.includes(eq))) return false;
-          if (preferredFloor !== null && room.floor !== preferredFloor) return false;
-          const hasConflict = reservations.some(
-            (r: { roomId: string; date: string; start: string; end: string }) =>
-              r.roomId === room.id && r.date === date && r.start < endTime && r.end > startTime
-          );
-          if (hasConflict) return false;
-          return true;
-        })
-        .sort((a: { floor: number; name: string }, b: { floor: number; name: string }) => {
-          if (a.floor !== b.floor) return a.floor - b.floor;
-          return a.name.localeCompare(b.name);
-        })
+    ? filterRooms(rooms, { attendees, equipment, preferredFloor, date, startTime, endTime, reservations })
     : [];
 
   const handleBook = async () => {
