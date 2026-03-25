@@ -4,6 +4,7 @@ import { colors } from '_tosslib/constants/colors';
 import { Suspense, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatDate } from 'shared/utils';
+import { DatePicker } from 'shared/components/DatePicker';
 import MyReservationList from './MyReservationList';
 import ReservationStatusList from './ReservationStatusList';
 
@@ -21,43 +22,40 @@ export function ReservationStatusPage() {
     }
   }, [locationState]);
 
-  
   return (
-    <div css={css`background: ${colors.white}; padding-bottom: 40px;`}>
-      <Top.Top03 css={css`padding-left: 24px; padding-right: 24px;`}>
+    <div
+      css={css`
+        background: ${colors.white};
+        padding-bottom: 40px;
+      `}
+    >
+      <Top.Top03
+        css={css`
+          padding-left: 24px;
+          padding-right: 24px;
+        `}
+      >
         회의실 예약
       </Top.Top03>
 
       <Spacing size={24} />
 
-      {/* 날짜 선택 */}
-      <div css={css`padding: 0 24px;`}>
-        <Text typography="t5" fontWeight="bold" color={colors.grey900}>
+      <div
+        css={css`
+          padding: 0 24px;
+        `}
+      >
+        <Text as="label" htmlFor="date-picker" typography="t5" fontWeight="bold" color={colors.grey900}>
           날짜 선택
         </Text>
         <Spacing size={16} />
-        <div css={css`display: flex; flex-direction: column; gap: 6px;`}>
-          <input
-            type="date"
-            value={date}
-            min={formatDate(new Date())}
-            onChange={e => setDate(e.target.value)}
-            aria-label="날짜"
-            css={css`
-              box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
-              background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
-              width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
-              transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
-            `}
-          />
-        </div>
+        <DatePicker id="date-picker" value={date} onChange={setDate} min={formatDate(new Date())} />
       </div>
 
       <Spacing size={24} />
       <Border size={8} />
       <Spacing size={24} />
 
-      {/* 예약 현황 타임라인 */}
       <Suspense fallback={<ReservationStatusList.Loading />}>
         <ReservationStatusList date={date} />
       </Suspense>
@@ -66,7 +64,6 @@ export function ReservationStatusPage() {
       <Border size={8} />
       <Spacing size={24} />
 
-      {/* 내 예약 목록 */}
       <Suspense fallback={<MyReservationList.Loading />}>
         <MyReservationList initialMessage={initialMessage} />
       </Suspense>
@@ -75,8 +72,11 @@ export function ReservationStatusPage() {
       <Border size={8} />
       <Spacing size={24} />
 
-      {/* 예약하기 버튼 */}
-      <div css={css`padding: 0 24px;`}>
+      <div
+        css={css`
+          padding: 0 24px;
+        `}
+      >
         <Button display="full" onClick={() => navigate('/booking')}>
           예약하기
         </Button>

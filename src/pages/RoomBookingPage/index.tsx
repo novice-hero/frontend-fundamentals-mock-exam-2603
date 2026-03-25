@@ -9,6 +9,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { EQUIPMENT_LABELS } from 'shared/consts';
 import { filterRooms } from './filterRooms';
 import { formatDate } from 'shared/utils';
+import { DatePicker } from 'shared/components/DatePicker';
 
 const ALL_EQUIPMENT: (keyof typeof EQUIPMENT_LABELS)[] = Object.keys(EQUIPMENT_LABELS);
 
@@ -163,20 +164,8 @@ export function RoomBookingPage() {
 
         {/* 날짜 */}
         <div css={css`display: flex; flex-direction: column; gap: 6px;`}>
-          <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>날짜</Text>
-          <input
-            type="date"
-            value={date}
-            min={formatDate(new Date())}
-            onChange={e => setFilter('date', e.target.value)}
-            aria-label="날짜"
-            css={css`
-              box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
-              background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
-              width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
-              transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
-            `}
-          />
+          <Text as="label" htmlFor="date-picker" typography="t7" fontWeight="medium" color={colors.grey600}>날짜</Text>
+          <DatePicker id="date-picker" value={date} onChange={value => setFilter('date', value)} min={formatDate(new Date())} />
         </div>
         <Spacing size={14} />
 
