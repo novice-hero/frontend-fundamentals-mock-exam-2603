@@ -1,21 +1,8 @@
-type Room = {
-  id: string;
-  name: string;
-  capacity: number;
-  equipment: string[];
-  floor: number;
-};
-
-type Reservation = {
-  roomId: string;
-  date: string;
-  start: string;
-  end: string;
-};
+import type { Equipment, Reservation, Room } from '_tosslib/server/types';
 
 type FilterOptions = {
   attendees: number;
-  equipment: string[];
+  equipment: Equipment[];
   preferredFloor: number | null;
   date: string;
   startTime: string;
