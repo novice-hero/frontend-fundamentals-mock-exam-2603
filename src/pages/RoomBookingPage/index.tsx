@@ -11,8 +11,9 @@ import { EQUIPMENT_LABELS } from 'shared/consts';
 import { getTimeSlots } from 'shared/time';
 import { formatDate } from 'shared/utils';
 import { filterRooms } from './filterRooms';
+import type { Equipment } from '_tosslib/server/types';
 
-const ALL_EQUIPMENT: (keyof typeof EQUIPMENT_LABELS)[] = Object.keys(EQUIPMENT_LABELS);
+const ALL_EQUIPMENT: Equipment[] = Object.keys(EQUIPMENT_LABELS).filter((key): key is Equipment => key in EQUIPMENT_LABELS);
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -23,12 +24,11 @@ export function RoomBookingPage() {
   const startTime = searchParams.get('startTime') || '';
   const endTime = searchParams.get('endTime') || '';
   const attendees = Number(searchParams.get('attendees')) || 1;
-  const equipment =
+  const equipment: Equipment[] =
     searchParams
       .get('equipment')
       ?.split(',')
-      .filter(Boolean)
-      .map((e: string) => e) ?? [];
+      .filter((e): e is Equipment => e in EQUIPMENT_LABELS) ?? [];
   const preferredFloor = searchParams.get('floor') ? Number(searchParams.get('floor')) : null;
 
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export function RoomBookingPage() {
       start: string;
       end: string;
       attendees: number;
-      equipment: string[];
+      equipment: Equipment[];
     }) => createReservation(data),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reservations', variables.date] });
@@ -73,7 +73,6 @@ export function RoomBookingPage() {
     },
   });
 
-  // 입력 검증
   let validationError: string | null = null;
   const hasTimeInputs = startTime !== '' && endTime !== '';
   if (hasTimeInputs) {
@@ -85,7 +84,6 @@ export function RoomBookingPage() {
   }
   const isFilterComplete = hasTimeInputs && !validationError;
 
-  // 필터링
   const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
 
   const availableRooms = isFilterComplete
