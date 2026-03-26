@@ -1,10 +1,9 @@
 import { css } from '@emotion/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Border, Button, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import type { Equipment } from '_tosslib/server/types';
 import axios from 'axios';
-import { createReservation, getReservations, getRooms } from 'pages/remotes';
+import { getReservations, getRooms } from 'pages/remotes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageBanner } from 'shared/components/MessageBanner';
@@ -12,10 +11,10 @@ import { AvailableRoomList } from './AvailableRoomList';
 import { FilterPanel } from './FilterPanel';
 import { filterRooms } from './filterRooms';
 import { useRoomBookingFilter } from './hooks/useRoomBookingFilter';
+import { useCreateReservation } from './mutations/useCreateReservation';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,20 +32,7 @@ export function RoomBookingPage() {
     enabled: !!date,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data: {
-      roomId: string;
-      date: string;
-      start: string;
-      end: string;
-      attendees: number;
-      equipment: Equipment[];
-    }) => createReservation(data),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['reservations', variables.date] });
-      queryClient.invalidateQueries({ queryKey: ['myReservations'] });
-    },
-  });
+  const createReservationMutation = useCreateReservation();
 
   let validationError: string | null = null;
   const hasTimeInputs = startTime !== '' && endTime !== '';
@@ -74,7 +60,7 @@ export function RoomBookingPage() {
     }
 
     try {
-      const result = await createMutation.mutateAsync({
+      const result = await createReservationMutation.mutateAsync({
         roomId: selectedRoomId,
         date,
         start: startTime,
@@ -209,8 +195,8 @@ export function RoomBookingPage() {
           />
 
           <Spacing size={16} />
-          <Button display="full" onClick={handleBook} disabled={createMutation.isPending}>
-            {createMutation.isPending ? '예약 중...' : '확정'}
+          <Button display="full" onClick={handleBook} disabled={createReservationMutation.isPending}>
+            {createReservationMutation.isPending ? '예약 중...' : '확정'}
           </Button>
         </div>
       )}
