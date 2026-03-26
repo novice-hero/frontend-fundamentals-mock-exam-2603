@@ -1,26 +1,17 @@
 import { css } from '@emotion/react';
 import { Border, Button, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { Suspense, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { formatDate } from 'shared/utils';
+import { Suspense, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DatePicker } from 'shared/components/DatePicker';
+import { formatDate } from 'shared/utils';
 import MyReservationList from './MyReservationList';
 import ReservationStatusList from './ReservationStatusList';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  
   const [date, setDate] = useState(formatDate(new Date()));
-
-  const locationState = location.state as { message?: string } | null;
-  const initialMessage = locationState?.message ? { type: 'success' as const, text: locationState.message } : null;
-
-  useEffect(() => {
-    if (locationState?.message) {
-      window.history.replaceState({}, '');
-    }
-  }, [locationState]);
 
   return (
     <div
@@ -65,7 +56,7 @@ export function ReservationStatusPage() {
       <Spacing size={24} />
 
       <Suspense fallback={<MyReservationList.Loading />}>
-        <MyReservationList initialMessage={initialMessage} />
+        <MyReservationList />
       </Suspense>
 
       <Spacing size={24} />

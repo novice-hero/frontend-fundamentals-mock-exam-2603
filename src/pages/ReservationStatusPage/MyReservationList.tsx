@@ -3,19 +3,26 @@ import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-q
 import { Button, ListRow, Spacing, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { cancelReservation, getMyReservations, getRooms } from 'pages/remotes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { MessageBanner } from 'shared/components/MessageBanner';
 import { EQUIPMENT_LABELS } from 'shared/consts';
 
-interface MyReservationListProps {
-  initialMessage?: { type: 'success' | 'error'; text: string } | null;
-}
+const MyReservationList = () => {
+  const location = useLocation();
+  const locationState = location.state as { message?: string } | null;
+  const initialMessage = locationState?.message ? { type: 'success' as const, text: locationState.message } : null;
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(initialMessage ?? null);
+  // 일단 사용처와 소비처를 최대한 가깝게 붙였는데, 이러면 이 컴포넌트에 책임이 너무 많아지긴 함
+  // 전역 토스트 컴포넌트 혹은 Context Api를 활용한 추상화 밖에 생각이 나질 않음
+  useEffect(() => {
+    if (locationState?.message) {
+      window.history.replaceState({}, '');
+    }
+  }, [locationState]);
 
-const MyReservationList = ({ initialMessage }: MyReservationListProps) => {
   const queryClient = useQueryClient();
   const { data: rooms = [] } = useSuspenseQuery({ queryKey: ['rooms'], queryFn: getRooms });
-
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(initialMessage ?? null);
-
   const { data: myReservationList = [] } = useSuspenseQuery({
     queryKey: ['myReservations'],
     queryFn: getMyReservations,
@@ -29,15 +36,6 @@ const MyReservationList = ({ initialMessage }: MyReservationListProps) => {
     },
   });
 
-  const handleCancel = async (id: string) => {
-    try {
-      await cancelMutation.mutateAsync(id);
-      setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
-    } catch {
-      setMessage({ type: 'error', text: '취소에 실패했습니다.' });
-    }
-  };
-
   const getRoomName = (roomId: string) => rooms.find(r => r.id === roomId)?.name ?? roomId;
 
   return (
@@ -49,27 +47,14 @@ const MyReservationList = ({ initialMessage }: MyReservationListProps) => {
             padding: 0 24px;
           `}
         >
-          <div
-            css={css`
-              padding: 10px 14px;
-              border-radius: 10px;
-              background: ${message.type === 'success' ? colors.blue50 : colors.red50};
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            `}
-          >
-            <Text
-              typography="t7"
-              fontWeight="medium"
-              color={message.type === 'success' ? colors.blue600 : colors.red500}
-            >
-              {message.text}
-            </Text>
-          </div>
-          <Spacing size={12} />
+          <MessageBanner
+            text={message.text}
+            textColor={message.type === 'success' ? colors.blue600 : colors.red500}
+            backgroundColor={message.type === 'success' ? colors.blue50 : colors.red50}
+          />
         </div>
       )}
+      <Spacing size={12} />
 
       {/* 내 예약 목록 */}
       <div
@@ -151,10 +136,16 @@ const MyReservationList = ({ initialMessage }: MyReservationListProps) => {
                         type="danger"
                         style="weak"
                         size="small"
-                        onClick={e => {
+                        disabled={cancelMutation.isPending}
+                        onClick={async e => {
                           e.stopPropagation();
                           if (window.confirm('정말 취소하시겠습니까?')) {
-                            handleCancel(res.id);
+                            try {
+                              await cancelMutation.mutateAsync(res.id);
+                              setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
+                            } catch {
+                              setMessage({ type: 'error', text: '취소에 실패했습니다.' });
+                            }
                           }
                         }}
                       >
