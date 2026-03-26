@@ -1,12 +1,13 @@
 import { css } from '@emotion/react';
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { Button, ListRow, Spacing, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { cancelReservation, getMyReservations, getRooms } from 'pages/remotes';
+import { getMyReservations, getRooms } from 'pages/remotes';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageBanner } from 'shared/components/MessageBanner';
 import { EQUIPMENT_LABELS } from 'shared/consts';
+import { useCancelReservation } from './mutations/useCancelReservation';
 
 const MyReservationList = () => {
   const location = useLocation();
@@ -21,26 +22,18 @@ const MyReservationList = () => {
     }
   }, [locationState]);
 
-  const queryClient = useQueryClient();
   const { data: rooms = [] } = useSuspenseQuery({ queryKey: ['rooms'], queryFn: getRooms });
   const { data: myReservationList = [] } = useSuspenseQuery({
     queryKey: ['myReservations'],
     queryFn: getMyReservations,
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => cancelReservation(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      queryClient.invalidateQueries({ queryKey: ['myReservations'] });
-    },
-  });
+  const cancelReservationMutation = useCancelReservation();
 
   const getRoomName = (roomId: string) => rooms.find(r => r.id === roomId)?.name ?? roomId;
 
   return (
     <>
-      {/* 메시지 배너 */}
       {message && (
         <div
           css={css`
@@ -56,7 +49,6 @@ const MyReservationList = () => {
       )}
       <Spacing size={12} />
 
-      {/* 내 예약 목록 */}
       <div
         css={css`
           padding: 0 24px;
@@ -136,12 +128,12 @@ const MyReservationList = () => {
                         type="danger"
                         style="weak"
                         size="small"
-                        disabled={cancelMutation.isPending}
+                        disabled={cancelReservationMutation.isPending}
                         onClick={async e => {
                           e.stopPropagation();
                           if (window.confirm('정말 취소하시겠습니까?')) {
                             try {
-                              await cancelMutation.mutateAsync(res.id);
+                              await cancelReservationMutation.mutateAsync(res.id);
                               setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
                             } catch {
                               setMessage({ type: 'error', text: '취소에 실패했습니다.' });
