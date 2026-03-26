@@ -7,6 +7,7 @@ import axios from 'axios';
 import { createReservation, getReservations, getRooms } from 'pages/remotes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MessageBanner } from 'shared/components/MessageBanner';
 import { AvailableRoomList } from './AvailableRoomList';
 import { FilterPanel } from './FilterPanel';
 import { filterRooms } from './filterRooms';
@@ -148,20 +149,7 @@ export function RoomBookingPage() {
           `}
         >
           <Spacing size={12} />
-          <div
-            css={css`
-              padding: 10px 14px;
-              border-radius: 10px;
-              background: ${colors.red50};
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            `}
-          >
-            <Text typography="t7" fontWeight="medium" color={colors.red500}>
-              {errorMessage}
-            </Text>
-          </div>
+          <MessageBanner text={errorMessage} textColor={colors.red500} backgroundColor={colors.red50} />
         </div>
       )}
 
